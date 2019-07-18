@@ -44,7 +44,7 @@ let rec isLiteral (expr: Expr) (cd: CallableDict): bool =
         isLiteral a.Expression cd && isLiteral b.Expression cd &&
             TypedExpression.IsPartialApplication (CallLikeExpression (a, b))
     | _ -> false
-    
+
 
 /// Converts a range literal to a sequence of integers
 let rangeLiteralToSeq (r: Expr): seq<int64> =
@@ -88,13 +88,13 @@ type VariablesDict() =
             "{" + String.Join(", ", x |> Seq.map (fun y -> y.Key + "=" + y.Value.ToString())) + "}"
         )) + "]"
 
-        
+
 /// Represents a (possibly-nested) tuple of strings.
 /// Used as a way to compare QsTuples and SymbolTuples.
 type StringTuple =
 | SingleItem of string
 | MultipleItems of seq<StringTuple>
-        
+
     static member fromQsTuple (x: QsTuple<LocalVariableDeclaration<QsLocalSymbol>>): StringTuple =
         match x with
         | QsTupleItem item ->
@@ -102,7 +102,7 @@ type StringTuple =
             | ValidName n -> SingleItem n.Value
             | InvalidName -> SingleItem "__invalid__"
         | QsTuple items -> MultipleItems (Seq.map StringTuple.fromQsTuple items)
-            
+
     static member fromSymbolTuple (x: SymbolTuple): StringTuple =
         match x with
         | InvalidItem -> SingleItem "__invalid__"
@@ -114,8 +114,8 @@ type StringTuple =
         match this with
         | SingleItem item -> item
         | MultipleItems items -> "(" + String.Join(", ", items) + ")"
-        
-        
+
+
 /// Modifies the VariablesDict by setting the given argument tuple to the given values
 let rec fillVars (vars: VariablesDict) (argTuple: StringTuple, arg: Expr): unit =
     match argTuple with
@@ -179,7 +179,7 @@ let rec fillPartialArg (partialArg: TypedExpression, arg: list<TypedExpression>)
         let newPa = wrapExpr (ValueTuple (ImmutableArray.CreateRange newList)) partialArg.ResolvedType.Resolution
         newPa, newArg
     | _ -> partialArg, arg
-    
+
 /// Transforms a partially-application call by replacing missing values with the new arguments
 let partialApplyFunction (baseMethod: TypedExpression) (partialArg: TypedExpression) (arg: TypedExpression): Expr =
     let argsList =
