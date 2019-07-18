@@ -6,6 +6,7 @@ open Microsoft.Quantum.QsCompiler.SyntaxTokens
 open Microsoft.Quantum.QsCompiler.SyntaxTree
 
 open Utils
+open Printer
 
 
 /// The current state of a function evaluation
@@ -28,7 +29,7 @@ type [<AbstractClass>] FunctionEvaluator(cd: CallableDict) =
     let castToBool x =
         match x with
         | BoolLiteral b -> ExprValue b
-        | _ -> "Not a BoolLiteral: " + (prettyPrint x) |> ExprError
+        | _ -> "Not a BoolLiteral: " + (printExpr x) |> ExprError
 
     /// Returns whether a FunctionState is an interrupt
     let isInterrupt = function Normal -> false | _ -> true
@@ -50,7 +51,7 @@ type [<AbstractClass>] FunctionEvaluator(cd: CallableDict) =
         | QsValueUpdate s ->
             match s.Lhs.Expression with
                 | Identifier (LocalVariable name, tArgs) -> vars.setVar(name.Value, this.evaluateExpression vars s.Rhs); Normal
-                | _ -> "Unknown LHS of value update statement: " + (prettyPrint s.Lhs.Expression) |> CouldNotEvaluate
+                | _ -> "Unknown LHS of value update statement: " + (printExpr s.Lhs.Expression) |> CouldNotEvaluate
         | QsConditionalStatement s ->
             match s.ConditionalBlocks |>
                 Seq.map (fun (ts, block) -> this.evaluateExpression vars ts |> castToBool, block) |>
@@ -64,7 +65,7 @@ type [<AbstractClass>] FunctionEvaluator(cd: CallableDict) =
             | RangeLiteral _ ->
                 rangeLiteralToSeq iterValues |> Seq.map (fun loopValue ->
                         vars.enterScope()
-                        fillVars vars (StringTuple.fromSymbolTuple (fst s.LoopItem), IntLiteral (int64 loopValue))
+                        fillVars vars (StringTuple.fromSymbolTuple (fst s.LoopItem), IntLiteral loopValue)
                         let result = this.evaluateScope vars s.Body
                         vars.exitScope()
                         result) |>
@@ -78,7 +79,7 @@ type [<AbstractClass>] FunctionEvaluator(cd: CallableDict) =
                         result) |>
                     Seq.tryFind isInterrupt |? Normal
             | _ ->
-                "Unknown IterationValue in for loop: " + (prettyPrint iterValues) |> CouldNotEvaluate
+                "Unknown IterationValue in for loop: " + (printExpr iterValues) |> CouldNotEvaluate
         | QsWhileStatement s ->
             Seq.initInfinite (fun _ -> this.evaluateExpression vars s.Condition |> castToBool) |>
                 Seq.map (function
@@ -104,6 +105,8 @@ type [<AbstractClass>] FunctionEvaluator(cd: CallableDict) =
                 Seq.tryFind snd |? (Normal, true) |> fst
         | QsQubitScope s ->
             "Cannot allocate qubits in function" |> CouldNotEvaluate
+        | QsScopeStatement s ->
+            "Not implemented" |> CouldNotEvaluate
 
     /// Evaluates a list of Q# statements
     member this.evaluateScope (vars: VariablesDict) (scope: QsScope): FunctionState =
