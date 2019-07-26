@@ -167,6 +167,8 @@ let ``Expression literal tests`` () =
         ("0b100",               true,    toInt 4,                                                               []); 
         ("+0b100",              true,    toInt 4,                                                               []); 
         ("-0b100",              true,    toExpr (NEG (toInt 4)),                                                []);
+        ("9223372036854775807", true,    toExpr (IntLiteral 9223372036854775807L),                              []);
+        ("-9223372036854775808", true,    toExpr (IntLiteral -9223372036854775808L),                            []);
         (".1",                  true,    toExpr (DoubleLiteral 0.1),                                            []); 
         ("1.0",                 true,    toExpr (DoubleLiteral 1.0),                                            []); 
         ("1.",                  true,    toExpr (DoubleLiteral 1.0),                                            []); 
